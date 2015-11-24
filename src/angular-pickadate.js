@@ -131,11 +131,20 @@
             return new Date(dateObj.year, dateObj.month - 1, dateObj.day, 3);
           },
 
-          setRestrictions: function(restrictions) {
+          setRestrictions: function(restrictions, allowRange, startDate, endDate) {
             minDate       = this.parseDate(restrictions.minDate) || new Date(0);
             maxDate       = this.parseDate(restrictions.maxDate) || new Date(99999999999999);
             currentDate   = restrictions.currentDate;
             disabledDates = restrictions.disabledDates || [];
+
+            if (allowRange) {
+              if (startDate && restrictions.rangeEditMode === 'endDate') {
+                console.log(minDate);
+                minDate = new Date(startDate.date);
+              } else if (endDate) {
+                maxDate = new Date(endDate.date);
+              }
+            }
           },
 
           allowPrevMonth: function() {
@@ -250,12 +259,17 @@
           minDate: '=',
           maxDate: '=',
           disabledDates: '=',
-          weekStartsOn: '='
+          weekStartsOn: '=',
+          rangeEditMode: '=', // startDate/endDate
+          endDate: '='
         },
 
         link: function(scope, element, attrs, ngModel)  {
           var allowMultiple           = attrs.hasOwnProperty('multiple'),
+              allowRange              = attrs.hasOwnProperty('range'),
               selectedDates           = [],
+              startDate               = null,
+              endDate                 = null,
               wantsModal              = element[0] instanceof HTMLInputElement,
               compiledHtml            = $compile(TEMPLATE)(scope),
               format                  = (attrs.format || 'yyyy-MM-dd').replace(/m/g, 'M'),
@@ -270,12 +284,47 @@
 
           scope.setDate = function(dateObj) {
             if (!dateObj.enabled) return;
-            selectedDates = allowMultiple ? toggleDate(dateObj, selectedDates) : [dateObj];
 
-            setViewValue(selectedDates);
+            if (allowRange) {
+              console.log(scope.rangeEditMode);
+              if (scope.rangeEditMode === 'endDate') {
+                scope.setEndDate(dateObj);
+              } else {
+                scope.setStartDate(dateObj);
+              }
+            } else {
+              if (allowMultiple) {
+                selectedDates = toggleDate(dateObj, selectedDates);
+              } else {
+                selectedDates = [dateObj];
+              }
 
-            scope.changeMonth(dateObj.monthOffset);
-            scope.displayPicker = !wantsModal;
+              setViewValue(selectedDates);
+
+              scope.changeMonth(dateObj.monthOffset);
+              scope.displayPicker = !wantsModal;
+            }
+
+          };
+
+          scope.updateRangeEditMode = function(newValue) {
+
+          };
+
+          scope.setStartDate = function(dateObj) {
+            console.log('setStartDate');
+            console.log(dateObj);
+            selectedDates = [dateObj.date];
+            startDate = dateObj;
+            setViewValue(startDate);
+            // scope.changeMonth(dateObj.monthOffset);
+            // scope.displayPicker = !wantsModal;
+          };
+
+          scope.setEndDate = function(dateObj) {
+            console.log('setEndDate');
+            endDate = dateObj;
+            setViewValue(endDate);
           };
 
           var $render = ngModel.$render = function(options) {
@@ -285,9 +334,13 @@
               selectedDates = [ngModel.$viewValue];
             }
 
+            if (selectedDates[0].formattedDate) {
+              selectedDates[0] = selectedDates[0].formattedDate;
+            }
+
             scope.currentDate = dateHelper.parseDate(scope.defaultDate || selectedDates[0]) || new Date();
 
-            dateHelper.setRestrictions(scope);
+            dateHelper.setRestrictions(scope, allowRange, startDate, endDate);
 
             selectedDates = map(selectedDates, function(date) {
               return dateHelper.buildDateObject(dateHelper.parseDate(date));
@@ -300,8 +353,19 @@
           };
 
           scope.classesFor = function(date) {
-            var formattedDates = map(selectedDates, 'formattedDate'),
+            var classes = [];
+            if (allowRange) {
+              if (startDate && date.formattedDate === startDate.formattedDate) {
+                classes.push('pickadate-start-date');
+              }
+              if (endDate && date.formattedDate === endDate.formattedDate) {
+                classes.push('pickadate-end-date');
+              }
+            } else {
+              var formattedDates = map(selectedDates, 'formattedDate'),
                 classes        = indexOf.call(formattedDates, date.formattedDate) >= 0 ? 'pickadate-active' : null;
+            }
+
             return date.classNames.concat(classes);
           };
 
@@ -318,7 +382,7 @@
 
           // Workaround to watch multiple properties. XXX use $scope.$watchGroup in angular 1.3
           scope.$watch(function() {
-            return angular.toJson([scope.minDate, scope.maxDate, scope.disabledDates]);
+            return angular.toJson([scope.minDate, scope.maxDate, scope.disabledDates, scope.rangeEditMode]);
           }, $render);
 
           // Insert datepicker into DOM

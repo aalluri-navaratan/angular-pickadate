@@ -40,6 +40,14 @@ gulp.task('sass', function () {
     .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('watch', function () {
+  gulp.watch('./src/*.scss', function () {
+    gulp.src('./src/*.scss')
+      .pipe(sass({ errLogToConsole: true }))
+      .pipe(gulp.dest('./dist'));
+  });
+});
+
 gulp.task('lint', function() {
   return gulp.src('./src/angular-pickadate.js')
     .pipe(jshint())

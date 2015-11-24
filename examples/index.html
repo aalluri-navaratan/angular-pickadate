@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+	<meta charset="UTF-8">
+	<title>angular-pickadate examples</title>
+	<link rel="stylesheet" href="../dist/angular-pickadate.css">
+</head>
+<body>
+	<div ng-controller="MainCtrl as vm">
+		{{date}}
+		<div style="width: 320px; margin: 0 auto;">
+			<button ng-click="vm.toggleMode()">Toggle mode</button>
+			<div pickadate ng-model="vm.startDate" range end-date="vm.endDate" range-edit-mode="vm.rangeEditMode"></div>
+		</div>
+	</div>
+	<script src="../bower_components/angular/angular.js"></script>
+	<script src="../src/angular-pickadate.js"></script>
+	<script>
+	var app = angular.module('app', ['pickadate']);
+	app.controller('MainCtrl', function () {
+		var vm = this;
+		vm.startDate = new Date();
+		vm.endDate;
+		vm.rangeEditMode = 'startDate';
+
+		vm.toggleMode = function () {
+			vm.rangeEditMode = vm.rangeEditMode === 'startDate' ? 'endDate' : 'startDate';
+		};
+	});
+	</script>
+</body>
+</html>
