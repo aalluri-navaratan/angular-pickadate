@@ -332,7 +332,7 @@
 
             if (endDate && scope.endDate == null) {
               endDate = scope.endDate;
-              scope.rangeEditMode = 'startDate';
+              // scope.rangeEditMode = 'startDate';
             }
 
             dateHelper.setRestrictions(scope, allowRange, startDate);
