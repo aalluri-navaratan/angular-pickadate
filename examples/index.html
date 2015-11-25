@@ -10,6 +10,8 @@
 		{{date}}
 		<div style="width: 320px; margin: 0 auto;">
 			<button ng-click="vm.toggleMode()">Toggle mode</button>
+			<button ng-click="vm.startDate = null">Clear start date</button>
+			<button ng-click="vm.endDate = null">Clear end date</button>
 			<div pickadate ng-model="vm.startDate" range end-date="vm.endDate" range-edit-mode="vm.rangeEditMode"></div>
 		</div>
 	</div>

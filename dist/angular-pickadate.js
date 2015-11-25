@@ -131,11 +131,19 @@
             return new Date(dateObj.year, dateObj.month - 1, dateObj.day, 3);
           },
 
-          setRestrictions: function(restrictions) {
+          setRestrictions: function(restrictions, allowRange, startDate, endDate) {
             minDate       = this.parseDate(restrictions.minDate) || new Date(0);
             maxDate       = this.parseDate(restrictions.maxDate) || new Date(99999999999999);
             currentDate   = restrictions.currentDate;
             disabledDates = restrictions.disabledDates || [];
+
+            if (allowRange) {
+              if (startDate && restrictions.rangeEditMode === 'endDate') {
+                minDate = new Date(startDate.date);
+              } else if (restrictions.endDate) {
+                maxDate = new Date(restrictions.endDate.date);
+              }
+            }
           },
 
           allowPrevMonth: function() {
@@ -214,31 +222,22 @@
 
       var TEMPLATE =
         '<div class="pickadate" ng-show="displayPicker" ng-style="modalStyles">' +
-          '<div class="pickadate-header">' +
-            '<div class="pickadate-controls">' +
-              '<a href="" class="pickadate-prev" ng-click="changeMonth(-1)" ng-show="allowPrevMonth">' +
-                $sce.trustAsHtml(i18n.t('prev')) +
-              '</a>' +
-              '<a href="" class="pickadate-next" ng-click="changeMonth(1)" ng-show="allowNextMonth">' +
-                $sce.trustAsHtml(i18n.t('next')) +
-              '</a>' +
-            '</div>'+
-            '<h3 class="pickadate-centered-heading">' +
-              '{{currentDate | date:"MMMM yyyy"}}' +
-            '</h3>' +
+          '<div class="pickadate__header">' +
+            '<a href="" class="pickadate__previous" ng-click="changeMonth(-1)" ng-show="allowPrevMonth"></a>' +
+            '<div class="pickadate__title" ng-bind="currentDate | date:\'MMMM yyyy\'"></div>' +
+            '<a href="" class="pickadate__next" ng-click="changeMonth(1)" ng-show="allowNextMonth"></a>' +
           '</div>' +
-          '<div class="pickadate-body">' +
-            '<div class="pickadate-main">' +
-              '<ul class="pickadate-cell">' +
-                '<li class="pickadate-head" ng-repeat="dayName in dayNames">' +
+          '<div class="pickadate__body">' +
+            '<div class="pickadate__main">' +
+              '<div class="pickadate__row">' +
+                '<div class="pickadate__day pickadate__day--day-name" ng-repeat="dayName in dayNames">' +
                   '{{dayName}}' +
-                '</li>' +
-              '</ul>' +
-              '<ul class="pickadate-cell">' +
-                '<li ng-repeat="dateObj in dates" ng-click="setDate(dateObj)" ng-class="classesFor(dateObj)">' +
-                  '{{dateObj.date | date:"d"}}' +
-                '</li>' +
-              '</ul>' +
+                '</div>' +
+              '</div>' +
+              '<div class="pickadate__row">' +
+                '<div class="pickadate__day" ng-repeat="dateObj in dates" ng-click="setDate(dateObj)" ng-class="classesFor(dateObj)" ng-bind="dateObj.date | date:\'d\'">' +
+                '</div>' +
+              '</div>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -250,12 +249,17 @@
           minDate: '=',
           maxDate: '=',
           disabledDates: '=',
-          weekStartsOn: '='
+          weekStartsOn: '=',
+          rangeEditMode: '=', // startDate/endDate
+          endDate: '='
         },
 
         link: function(scope, element, attrs, ngModel)  {
           var allowMultiple           = attrs.hasOwnProperty('multiple'),
+              allowRange              = attrs.hasOwnProperty('range'),
               selectedDates           = [],
+              startDate               = null,
+              endDate                 = null,
               wantsModal              = element[0] instanceof HTMLInputElement,
               compiledHtml            = $compile(TEMPLATE)(scope),
               format                  = (attrs.format || 'yyyy-MM-dd').replace(/m/g, 'M'),
@@ -270,24 +274,68 @@
 
           scope.setDate = function(dateObj) {
             if (!dateObj.enabled) return;
-            selectedDates = allowMultiple ? toggleDate(dateObj, selectedDates) : [dateObj];
 
-            setViewValue(selectedDates);
+            if (allowRange) {
+              if (scope.rangeEditMode === 'endDate') {
+                scope.setEndDate(dateObj);
+              } else {
+                scope.setStartDate(dateObj);
 
-            scope.changeMonth(dateObj.monthOffset);
-            scope.displayPicker = !wantsModal;
+                if (!endDate) {
+                  scope.rangeEditMode = 'endDate';
+                }
+              }
+            } else {
+              if (allowMultiple) {
+                selectedDates = toggleDate(dateObj, selectedDates);
+              } else {
+                selectedDates = [dateObj];
+              }
+
+              setViewValue(selectedDates);
+
+              // scope.changeMonth(dateObj.monthOffset);
+              scope.displayPicker = !wantsModal;
+            }
+
+          };
+
+          scope.setStartDate = function(dateObj) {
+            selectedDates = [dateObj.date];
+            startDate = dateObj;
+            setViewValue(startDate);
+          };
+
+          scope.setEndDate = function(dateObj) {
+            scope.endDate = dateObj;
+            endDate = dateObj;
+            setViewValue(endDate);
           };
 
           var $render = ngModel.$render = function(options) {
+            if (ngModel.$modelValue === null) {
+              startDate = null;
+              scope.rangeEditMode = 'startDate';
+            }
+
             if (angular.isArray(ngModel.$viewValue)) {
               selectedDates = ngModel.$viewValue;
             } else if (ngModel.$viewValue) {
               selectedDates = [ngModel.$viewValue];
             }
 
+            if (selectedDates[0].formattedDate) {
+              selectedDates[0] = selectedDates[0].formattedDate;
+            }
+
+            if (endDate && scope.endDate == null) {
+              endDate = scope.endDate;
+              scope.rangeEditMode = 'startDate';
+            }
+
             scope.currentDate = dateHelper.parseDate(scope.defaultDate || selectedDates[0]) || new Date();
 
-            dateHelper.setRestrictions(scope);
+            dateHelper.setRestrictions(scope, allowRange, startDate);
 
             selectedDates = map(selectedDates, function(date) {
               return dateHelper.buildDateObject(dateHelper.parseDate(date));
@@ -300,8 +348,22 @@
           };
 
           scope.classesFor = function(date) {
-            var formattedDates = map(selectedDates, 'formattedDate'),
+            var classes = [];
+            if (allowRange) {
+              if (startDate && date.formattedDate === startDate.formattedDate) {
+                classes.push('pickadate__day--start-date');
+              }
+              if (endDate && date.formattedDate === endDate.formattedDate) {
+                classes.push('pickadate__day--end-date');
+              }
+              if (startDate && endDate && date.date > startDate.date && date.date < endDate.date) {
+                classes.push('pickadate__day--in-range');
+              }
+            } else {
+              var formattedDates = map(selectedDates, 'formattedDate'),
                 classes        = indexOf.call(formattedDates, date.formattedDate) >= 0 ? 'pickadate-active' : null;
+            }
+
             return date.classNames.concat(classes);
           };
 
@@ -318,7 +380,7 @@
 
           // Workaround to watch multiple properties. XXX use $scope.$watchGroup in angular 1.3
           scope.$watch(function() {
-            return angular.toJson([scope.minDate, scope.maxDate, scope.disabledDates]);
+            return angular.toJson([scope.minDate, scope.maxDate, scope.disabledDates, scope.rangeEditMode, scope.endDate]);
           }, $render);
 
           // Insert datepicker into DOM
@@ -353,10 +415,10 @@
             scope.dayNames       = dateHelper.buildDayNames();
 
             scope.dates = map(dates, function(date) {
-              date.classNames = [date.enabled ? 'pickadate-enabled' : 'pickadate-disabled'];
+              date.classNames = [date.enabled ? 'is-enabled' : 'is-disabled'];
 
-              if (date.today)    date.classNames.push('pickadate-today');
-              if (date.disabled) date.classNames.push('pickadate-unavailable');
+              if (date.today)    date.classNames.push('pickadate__day--today');
+              if (date.disabled) date.classNames.push('is-unavailable');
 
               return date;
             });
