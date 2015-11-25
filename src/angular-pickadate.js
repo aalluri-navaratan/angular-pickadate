@@ -223,9 +223,9 @@
       var TEMPLATE =
         '<div class="pickadate" ng-show="displayPicker" ng-style="modalStyles">' +
           '<div class="pickadate__header">' +
-            '<a href="" class="pickadate__previous" ng-click="changeMonth(-1)" ng-show="allowPrevMonth"></a>' +
+            '<a href="" class="pickadate__previous" ng-click="changeMonth(-1)" ng-class="{\'is-disabled\': allowPrevMonth }"></a>' +
             '<div class="pickadate__title" ng-bind="currentDate | date:\'MMMM yyyy\'"></div>' +
-            '<a href="" class="pickadate__next" ng-click="changeMonth(1)" ng-show="allowNextMonth"></a>' +
+            '<a href="" class="pickadate__next" ng-click="changeMonth(1)" ng-class="{\'is-disabled\': allowPrevMonth }">Next</a>' +
           '</div>' +
           '<div class="pickadate__body">' +
             '<div class="pickadate__main">' +
@@ -374,6 +374,7 @@
             // behaviour
             scope.currentDate.setDate(1);
             scope.currentDate.setMonth(scope.currentDate.getMonth() + offset);
+
             render();
           };
 
@@ -407,7 +408,14 @@
           }
 
           function render() {
-            var dates = dateHelper.buildDates(scope.currentDate.getFullYear(), scope.currentDate.getMonth());
+            var dateShown;
+            if (allowRange && endDate && scope.rangeEditMode === 'endDate') {
+              dateShown = endDate.date;
+            } else {
+              dateShown = scope.currentDate;
+            }
+
+            var dates = dateHelper.buildDates(dateShown.getFullYear(), dateShown.getMonth());
 
             scope.allowPrevMonth = dateHelper.allowPrevMonth();
             scope.allowNextMonth = dateHelper.allowNextMonth();
