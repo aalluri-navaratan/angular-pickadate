@@ -134,7 +134,7 @@
           setRestrictions: function(restrictions, allowRange, startDate, endDate) {
             minDate       = this.parseDate(restrictions.minDate) || new Date(0);
             maxDate       = this.parseDate(restrictions.maxDate) || new Date(99999999999999);
-            currentDate   = restrictions.currentDate;
+            currentDate   = new Date(0);// restrictions.currentDate;
             disabledDates = restrictions.disabledDates || [];
 
             if (allowRange) {
@@ -271,6 +271,7 @@
               });
 
           scope.displayPicker = !wantsModal;
+          scope.currentDate = new Date();
 
           scope.setDate = function(dateObj) {
             if (!dateObj.enabled) return;
@@ -308,6 +309,7 @@
 
           scope.setEndDate = function(dateObj) {
             scope.endDate = dateObj;
+            scope.currentDate = dateObj.date;
             endDate = dateObj;
           };
 
@@ -331,8 +333,6 @@
               endDate = scope.endDate;
               scope.rangeEditMode = 'startDate';
             }
-
-            scope.currentDate = dateHelper.parseDate(scope.defaultDate || selectedDates[0]) || new Date();
 
             dateHelper.setRestrictions(scope, allowRange, startDate);
 
@@ -408,14 +408,16 @@
           }
 
           function render() {
-            var dateShown;
-            if (allowRange && endDate && scope.rangeEditMode === 'endDate') {
-              dateShown = endDate.date;
-            } else {
-              dateShown = scope.currentDate;
-            }
+            // var dateShown;
+            // if (allowRange && endDate && scope.rangeEditMode === 'endDate') {
+            //   dateShown = endDate.date;
+            // } else {
+            //   dateShown = scope.currentDate;
+            // }
 
-            var dates = dateHelper.buildDates(dateShown.getFullYear(), dateShown.getMonth());
+            console.log('render', scope.currentDate);
+
+            var dates = dateHelper.buildDates(scope.currentDate.getFullYear(), scope.currentDate.getMonth());
 
             scope.allowPrevMonth = dateHelper.allowPrevMonth();
             scope.allowNextMonth = dateHelper.allowNextMonth();
