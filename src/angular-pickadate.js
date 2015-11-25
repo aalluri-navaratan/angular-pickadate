@@ -303,13 +303,12 @@
           scope.setStartDate = function(dateObj) {
             selectedDates = [dateObj.date];
             startDate = dateObj;
-            setViewValue(startDate);
+            setViewValue([startDate]);
           };
 
           scope.setEndDate = function(dateObj) {
             scope.endDate = dateObj;
             endDate = dateObj;
-            setViewValue(endDate);
           };
 
           var $render = ngModel.$render = function(options) {

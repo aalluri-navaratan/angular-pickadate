@@ -9,6 +9,8 @@
 	<div ng-controller="MainCtrl as vm">
 		{{date}}
 		<div style="width: 320px; margin: 0 auto;">
+			<p>Start date: {{vm.startDate.formattedDate}}</p>
+			<p>End date: {{vm.endDate.formattedDate}}</p>
 			<button ng-click="vm.toggleMode()">Toggle mode</button>
 			<button ng-click="vm.startDate = null">Clear start date</button>
 			<button ng-click="vm.endDate = null">Clear end date</button>
