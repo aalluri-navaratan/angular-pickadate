@@ -278,7 +278,11 @@
 
             if (allowRange) {
               if (scope.rangeEditMode === 'endDate') {
-                scope.setEndDate(dateObj);
+                if (endDate && dateObj.formattedDate === endDate.formattedDate) {
+                  scope.endDate = null;
+                } else {
+                  scope.setEndDate(dateObj);
+                }
               } else {
                 scope.setStartDate(dateObj);
 
