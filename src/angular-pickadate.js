@@ -314,6 +314,7 @@
           };
 
           var $render = ngModel.$render = function(options) {
+            console.log('$render', ngModel);
             if (ngModel.$modelValue === null) {
               startDate = null;
               scope.rangeEditMode = 'startDate';
@@ -342,8 +343,12 @@
 
             selectedDates = filter(selectedDates, { enabled: true });
 
-            setViewValue(selectedDates, options);
             render();
+
+            // No questions asked.
+            if (ngModel.$modelValue === null) return;
+
+            setViewValue(selectedDates, options);
           };
 
           scope.classesFor = function(date) {
@@ -408,15 +413,6 @@
           }
 
           function render() {
-            // var dateShown;
-            // if (allowRange && endDate && scope.rangeEditMode === 'endDate') {
-            //   dateShown = endDate.date;
-            // } else {
-            //   dateShown = scope.currentDate;
-            // }
-
-            console.log('render', scope.currentDate);
-
             var dates = dateHelper.buildDates(scope.currentDate.getFullYear(), scope.currentDate.getMonth());
 
             scope.allowPrevMonth = dateHelper.allowPrevMonth();
