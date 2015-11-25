@@ -430,7 +430,7 @@
             if (allowMultiple) {
               ngModel.$setViewValue(map(value, 'formattedDate'));
             } else {
-              ngModel.$setViewValue(value[0] && value[0].formattedDate);
+              ngModel.$setViewValue(value[0]);
             }
 
             if (!options.skipRenderInput) element.val(ngModel.$viewValue);
