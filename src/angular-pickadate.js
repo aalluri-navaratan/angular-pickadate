@@ -322,7 +322,6 @@
           };
 
           var $render = ngModel.$render = function(options) {
-            console.log('$render', ngModel);
             if (ngModel.$modelValue === null) {
               startDate = null;
               scope.rangeEditMode = 'startDate';
