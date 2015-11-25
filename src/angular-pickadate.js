@@ -284,7 +284,11 @@
                   scope.setEndDate(dateObj);
                 }
               } else {
-                scope.setStartDate(dateObj);
+                if (startDate && dateObj.formattedDate === startDate.formattedDate) {
+                  scope.startDate = null;
+                } else {
+                  scope.setStartDate(dateObj);
+                }
 
                 if (!endDate) {
                   scope.rangeEditMode = 'endDate';
