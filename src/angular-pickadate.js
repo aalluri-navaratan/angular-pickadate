@@ -225,7 +225,7 @@
           '<div class="pickadate__header">' +
             '<a href="" class="pickadate__previous" ng-click="changeMonth(-1)" ng-class="{\'is-disabled\': allowPrevMonth }"></a>' +
             '<div class="pickadate__title" ng-bind="currentDate | date:\'MMMM yyyy\'"></div>' +
-            '<a href="" class="pickadate__next" ng-click="changeMonth(1)" ng-class="{\'is-disabled\': allowPrevMonth }">Next</a>' +
+            '<a href="" class="pickadate__next" ng-click="changeMonth(1)" ng-class="{\'is-disabled\': allowPrevMonth }"></a>' +
           '</div>' +
           '<div class="pickadate__body">' +
             '<div class="pickadate__main">' +
