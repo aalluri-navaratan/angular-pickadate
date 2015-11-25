@@ -324,7 +324,7 @@
               selectedDates = [ngModel.$viewValue];
             }
 
-            if (selectedDates[0].formattedDate) {
+            if (selectedDates[0] && selectedDates[0].formattedDate) {
               selectedDates[0] = selectedDates[0].formattedDate;
             }
 
